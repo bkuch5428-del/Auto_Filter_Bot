@@ -1,7 +1,6 @@
 class script(object):
     START_TXT = """<b><u>🎬 ᴡᴇʟᴄᴏᴍᴇ ᴛᴏ ʙᴏʟʟʏᴡᴏᴏᴅ ᴍᴏᴠɪᴇꜱ ʙᴏᴛ 🎬
 </u></b>
-
 <b>ʜᴇʏ {}, {}</b>
 
 <b>🤖 ɪ ᴀᴍ <a href=https://t.me/Bollywood_movies_roobot{}>{}</a>, ᴛʜᴇ ᴍᴏꜱᴛ ᴘᴏᴡᴇʀꜰᴜʟ ᴀᴜᴛᴏ ꜰɪʟᴛᴇʀ ʙᴏᴛ ᴡɪᴛʜ ᴘʀᴇᴍɪᴜᴍ ꜰᴇᴀᴛᴜʀᴇꜱ
@@ -13,7 +12,6 @@ class script(object):
 
     GSTART_TXT = """<b>🎬 ᴡᴇʟᴄᴏᴍᴇ ᴛᴏ ʙᴏʟʟʏᴡᴏᴏᴅ ᴍᴏᴠɪᴇꜱ ʙᴏᴛ 🎬
 </b>
-
 <b>ʜᴇʏ {},</b>
 
 <b>🤖 ɪ ᴀᴍ <a href=https://t.me/Bollywood_movies_roobot{}>{}</a>, ᴛʜᴇ ᴍᴏꜱᴛ ᴘᴏᴡᴇʀꜰᴜʟ ᴀᴜᴛᴏ ꜰɪʟᴛᴇʀ ʙᴏᴛ ᴡɪᴛʜ ᴘʀᴇᴍɪᴜᴍ ꜰᴇᴀᴛᴜʀᴇꜱ
