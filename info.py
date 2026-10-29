@@ -62,12 +62,12 @@ SUPPORT_CHAT = environ.get('SUPPORT_CHAT', 'https://t.me/global_robots_chat')  #
 
 # FORCE_SUB 
 auth_req_channels = environ.get("AUTH_REQ_CHANNELS", "-1002843957435")# requst to join Channel for force sub (make sure bot is admin) only for bot ADMINS  
-auth_channels     = environ.get("AUTH_CHANNELS", "-1002843957435")# Channels for force sub (make sure bot is admin)
+auth_channels     = environ.get("AUTH_CHANNELS", "-1002993790290")# Channels for force sub (make sure bot is admin)
 
 # ============================
 # Payment Configuration
 # ============================
-QR_CODE = environ.get('QR_CODE', 'https://graph.org/file/e419f801841c2ee3db0fc.jpg')    # QR code image for payments
+QR_CODE = environ.get('QR_CODE', 'https://ibb.co/hFcHyC7q')    # QR code image for payments
 OWNER_UPI_ID = environ.get('OWNER_UPI_ID', 'bobbyahirwar@fam')    # Owner UPI ID for payments
 
 STAR_PREMIUM_PLANS = {
