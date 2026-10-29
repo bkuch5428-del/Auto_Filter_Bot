@@ -1,22 +1,24 @@
 class script(object):
     START_TXT = """<b><u>🎬 ᴡᴇʟᴄᴏᴍᴇ ᴛᴏ ʙᴏʟʟʏᴡᴏᴏᴅ ᴍᴏᴠɪᴇꜱ ʙᴏᴛ 🎬
-    </u></b>
+</u></b>
 
 <b>ʜᴇʏ {}, {}</b>
 
 <b>🤖 ɪ ᴀᴍ <a href=https://t.me/Bollywood_movies_roobot{}>{}</a>, ᴛʜᴇ ᴍᴏꜱᴛ ᴘᴏᴡᴇʀꜰᴜʟ ᴀᴜᴛᴏ ꜰɪʟᴛᴇʀ ʙᴏᴛ ᴡɪᴛʜ ᴘʀᴇᴍɪᴜᴍ ꜰᴇᴀᴛᴜʀᴇꜱ
-🔎 ᴊᴜꜱᴛ ꜱᴇɴᴅ ᴍᴇ ᴛʜᴇ ᴍᴏᴠɪᴇ ᴏʀ ꜱᴇʀɪᴇꜱ ɴᴀᴍᴇ, ᴀɴᴅ ɪ'ʟʟ ꜰɪɴᴅ ᴛʜᴇ ꜰɪʟᴇ ꜰᴏʀ ʏᴏᴜ. 🎬
+
+🔎 ᴊᴜꜱᴛ ꜱᴇɴᴅ ᴍᴇ ᴛʜᴇ ᴍᴏᴠɪᴇ ᴏʀ ꜱᴇʀɪᴇꜱ ɴᴀᴍᴇ, ᴀɴᴅ ɪ'ʟʟ ꜰɪɴᴅ ᴛʜᴇ ꜰɪʟᴇ ꜰᴏʀ ʏᴏᴜ 🎬
 </b>
 """
 
 
     GSTART_TXT = """<b>🎬 ᴡᴇʟᴄᴏᴍᴇ ᴛᴏ ʙᴏʟʟʏᴡᴏᴏᴅ ᴍᴏᴠɪᴇꜱ ʙᴏᴛ 🎬
-    </b>
+</b>
 
 <b>ʜᴇʏ {},</b>
 
 <b>🤖 ɪ ᴀᴍ <a href=https://t.me/Bollywood_movies_roobot{}>{}</a>, ᴛʜᴇ ᴍᴏꜱᴛ ᴘᴏᴡᴇʀꜰᴜʟ ᴀᴜᴛᴏ ꜰɪʟᴛᴇʀ ʙᴏᴛ ᴡɪᴛʜ ᴘʀᴇᴍɪᴜᴍ ꜰᴇᴀᴛᴜʀᴇꜱ
-🔎 ᴊᴜꜱᴛ ꜱᴇɴᴅ ᴍᴇ ᴛʜᴇ ᴍᴏᴠɪᴇ ᴏʀ ꜱᴇʀɪᴇꜱ ɴᴀᴍᴇ, ᴀɴᴅ ɪ'ʟʟ ꜰɪɴᴅ ᴛʜᴇ ꜰɪʟᴇ ꜰᴏʀ ʏᴏᴜ. 🎬
+
+🔎 ᴊᴜꜱᴛ ꜱᴇɴᴅ ᴍᴇ ᴛʜᴇ ᴍᴏᴠɪᴇ ᴏʀ ꜱᴇʀɪᴇꜱ ɴᴀᴍᴇ, ᴀɴᴅ ɪ'ʟʟ ꜰɪɴᴅ ᴛʜᴇ ꜰɪʟᴇ ꜰᴏʀ ʏᴏᴜ 🎬
 </b>"""
 
     
@@ -275,7 +277,7 @@ Nᴀᴍᴇ : {}
 
 Mᴇꜱꜱᴀɢᴇ : <b>{}</b>"""
     
-    CAPTION = """<b><a href="https://t.me/moviesmasterrequest">{file_name}</a></b>\n\n<b>⚜️ Powered By : <a href="https://t.me/moviesmasterupdates">[ UPDATE CHANNEL ]</a></b>"""
+    CAPTION = """<b><a href="https://t.me/moviesmasterrequest">{file_name}</a></b>\n\n<b>⚜️ Powered By : <a href="https://t.me/moviesmasterupdates">[MOVIES MASTER]</a></b>"""
 
     
     MOVIE_UPDATE_NOTIFY_TXT = """
