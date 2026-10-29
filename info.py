@@ -112,11 +112,11 @@ TUTORIAL_2 = environ.get("TUTORIAL_2", "https://t.me/+ph5bMwjX_k45MDc1")   # Sec
 TUTORIAL_3 = environ.get("TUTORIAL_3", "https://t.me/+ph5bMwjX_k45MDc1")   # Third tutorial link for verification
 
 # Verification (Must Fill All Veriables. Else You Got Error
-SHORTENER_API = environ.get("SHORTENER_API", "") # Shortener API key
-SHORTENER_WEBSITE = environ.get("SHORTENER_WEBSITE", "") # Shortener website
+SHORTENER_API = environ.get("SHORTENER_API", "eb3977eeedfd878f5d3552dee9bfbdb86b982017") # Shortener API key
+SHORTENER_WEBSITE = environ.get("SHORTENER_WEBSITE", "shortxlinks.com") # Shortener website
 
-SHORTENER_API2 = environ.get("SHORTENER_API2", "")  # Shortener API key for second website
-SHORTENER_WEBSITE2 = environ.get("SHORTENER_WEBSITE2", "") # Shortener website for second website
+SHORTENER_API2 = environ.get("SHORTENER_API2", "13d14e4a8846d46603ca138568a8b81809f812fa")  # Shortener API key for second website
+SHORTENER_WEBSITE2 = environ.get("SHORTENER_WEBSITE2", "softurl.in") # Shortener website for second website
 
 SHORTENER_API3 = environ.get("SHORTENER_API3", "")
 SHORTENER_WEBSITE3 = environ.get("SHORTENER_WEBSITE3", "") # Shortener website for third website
