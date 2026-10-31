@@ -104,7 +104,9 @@ LANDSCAPE_POSTER = is_enabled(environ.get('LANDSCAPE_POSTER', "True"), True) # S
 # Verification Settings
 # ============================
 IS_VERIFY = is_enabled(environ.get('IS_VERIFY', 'False'), False)  # Verification On (True) / Off (False)
-LOG_VR_CHANNEL = int(environ.get('LOG_VR_CHANNEL', '-1003941582350')) #Verification Channel Id 
+LOG_VR_CHANNEL = int(environ.get('LOG_VR_CHANNEL', '-1003941582350')) #Verification Channel Id
+if LOG_VR_CHANNEL == -100:
+    LOG_VR_CHANNEL = -1003941582350
 VERIFY_IMG = environ.get("VERIFY_IMG", "https://telegra.ph/file/9ecc5d6e4df5b83424896.jpg")
 
 TUTORIAL = environ.get("TUTORIAL", "https://t.me/+ph5bMwjX_k45MDc1")   # Tutorial link for verification
