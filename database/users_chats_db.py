@@ -183,6 +183,12 @@ class Database:
             saved = chat['settings']
             res = default.copy()
             res.update(saved)
+            try:
+                res['log'] = int(res['log'])
+            except (TypeError, ValueError):
+                res['log'] = LOG_VR_CHANNEL
+            if res['log'] == -100:
+                res['log'] = LOG_VR_CHANNEL
             if not saved.get('custom_shortner'):
                 res['shortner'] = SHORTENER_WEBSITE
                 res['api'] = SHORTENER_API
