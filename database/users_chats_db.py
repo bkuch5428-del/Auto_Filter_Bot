@@ -2,7 +2,7 @@ import datetime
 import logging
 import motor.motor_asyncio
 from info import (
-    DATABASE_NAME,DATABASE_URI,DATABASE_URI2, MULTIPLE_DB, MAINTENANCE, PM_SEARCH,
+    DATABASE_NAME, DATABASE_NAME2, DATABASE_URI, DATABASE_URI2, MULTIPLE_DB, MAINTENANCE, PM_SEARCH,
     BUTTON_MODE, P_TTI_SHOW_OFF, PROTECT_CONTENT, IMDB, SPELL_CHECK_REPLY, MELCOW_NEW_USERS, 
     AUTO_DELETE, AUTO_FFILTER, MAX_BTN, IMDB_TEMPLATE, LOG_VR_CHANNEL, TUTORIAL, TUTORIAL_2,
     TUTORIAL_3, SHORTENER_API, SHORTENER_API2, SHORTENER_API3, SHORTENER_WEBSITE, SHORTENER_WEBSITE2,
@@ -13,10 +13,20 @@ from info import (
 
 logger = logging.getLogger(__name__)
 
-class Database:    
-    def __init__(self, uri, database_name):
+
+class MergedList(list):
+    def __aiter__(self):
+        async def iterator():
+            for item in self:
+                yield item
+        return iterator()
+
+
+class Database:
+    def __init__(self, uri, database_name, secondary=None):
         self._client = motor.motor_asyncio.AsyncIOMotorClient(uri)
         self.db = self._client[database_name]
+        self.secondary = secondary
         self._prem_cache = {}
         # Collections
         self.col = self.db.users
@@ -30,6 +40,31 @@ class Database:
         self.filename_col = self.db.filename
         self.movie_updates = self.db.movie_updates
         self.connection = self.db.connections
+
+    async def _find_one(self, collection_name, query, projection=None):
+        collection = getattr(self, collection_name, None)
+        if collection is None:
+            collection = self.db[collection_name]
+        document = await collection.find_one(query, projection)
+        if document:
+            return document
+        if self.secondary:
+            return await self.secondary.db[collection_name].find_one(query, projection)
+        return None
+
+    async def _merged_documents(self, collection_name, query=None):
+        query = query or {}
+        documents = await self.db[collection_name].find(query).to_list(length=None)
+        merged = MergedList(documents)
+        seen = {document.get("id", document.get("_id")) for document in documents}
+        if self.secondary:
+            secondary_documents = await self.secondary.db[collection_name].find(query).to_list(length=None)
+            for document in secondary_documents:
+                identity = document.get("id", document.get("_id"))
+                if identity not in seen:
+                    seen.add(identity)
+                    merged.append(document)
+        return merged
 
     async def add_name(self, filename):
         if await self.movie_updates.find_one({'_id': filename}):
@@ -85,12 +120,11 @@ class Database:
         await self.col.insert_one(user)
     
     async def is_user_exist(self, id):
-        user = await self.col.find_one({'id':int(id)})
-        return bool(user)
+        return bool(await self._find_one("col", {'id': int(id)}))
     
     async def total_users_count(self):
-        count = await self.col.count_documents({})
-        return count
+        users = await self._merged_documents("users")
+        return len(users)
     
     async def remove_ban(self, id):
         ban_status = dict(
@@ -111,13 +145,13 @@ class Database:
             is_banned=False,
             ban_reason=''
         )
-        user = await self.col.find_one({'id':int(id)})
+        user = await self._find_one("col", {'id': int(id)})
         if not user:
             return default
         return user.get('ban_status', default)
 
     async def get_all_users(self):
-        return self.col.find({})
+        return await self._merged_documents("users")
     
     async def delete_user(self, user_id):
         await self.col.delete_many({'id': int(user_id)})
@@ -126,18 +160,16 @@ class Database:
         await self.grp.delete_many({'id': int(id)})    
 
     async def get_banned(self):
-        users = self.col.find({'ban_status.is_banned': True})
-        chats = self.grp.find({'chat_status.is_disabled': True})
-        b_chats = [chat['id'] async for chat in chats]
-        b_users = [user['id'] async for user in users]
-        return b_users, b_chats
+        all_users = await self._merged_documents("users", {'ban_status.is_banned': True})
+        all_chats = await self._merged_documents("groups", {'chat_status.is_disabled': True})
+        return [user['id'] for user in all_users], [chat['id'] for chat in all_chats]
     
     async def add_chat(self, chat, title):
         chat = self.new_group(chat, title)
         await self.grp.insert_one(chat)
     
     async def get_chat(self, chat):
-        chat = await self.grp.find_one({'id':int(chat)})
+        chat = await self._find_one("grp", {'id': int(chat)})
         return False if not chat else chat.get('chat_status')
     
     async def re_enable_chat(self, id):
@@ -178,7 +210,7 @@ class Database:
             'caption': CUSTOM_FILE_CAPTION,
             'fsub': AUTH_CHANNELS,
         }
-        chat = await self.grp.find_one({'id': int(id)})
+        chat = await self._find_one("grp", {'id': int(id)})
         if chat and 'settings' in chat:
             saved = chat['settings']
             res = default.copy()
@@ -221,22 +253,21 @@ class Database:
         await self.grp.update_one({'id': int(chat)}, {'$set': {'chat_status': chat_status}})
 
     async def total_chat_count(self):
-        count = await self.grp.count_documents({})
-        return count
+        chats = await self._merged_documents("groups")
+        return len(chats)
     
     async def get_all_chats(self):
-        return self.grp.find({})
+        return await self._merged_documents("groups")
 
     async def get_user(self, user_id):
-        user_data = await self.users.find_one({"id": user_id})
-        return user_data
+        return await self._find_one("users", {"id": user_id})
     async def update_user(self, user_data):
         self._prem_cache.pop(user_data.get("id"), None)
         await self.users.update_one({"id": user_data["id"]}, {"$set": user_data}, upsert=True)
   
     async def get_notcopy_user(self, user_id):
         user_id = int(user_id)
-        user = await self.misc.find_one({"user_id": user_id})
+        user = await self._find_one("misc", {"user_id": user_id})
         if not user:
             res = {
                 "user_id": user_id,
@@ -247,11 +278,14 @@ class Database:
             return res
         return user
 
-    async def update_notcopy_user(self, user_id, value:dict):
+    async def update_notcopy_user(self, user_id, value: dict):
         user_id = int(user_id)
-        myquery = {"user_id": user_id}
-        newvalues = {"$set": value}
-        return await self.misc.update_one(myquery, newvalues)
+        existing = await self._find_one("misc", {"user_id": user_id})
+        document = {"user_id": user_id}
+        if existing:
+            document.update(existing)
+        document.update(value)
+        return await self.misc.replace_one({"user_id": user_id}, document, upsert=True)
 
     async def is_user_verified(self, user_id):
         user = await self.get_notcopy_user(user_id)
@@ -326,12 +360,17 @@ class Database:
         return await self.verify_id.insert_one(res)
 
     async def get_verify_id_info(self, user_id: int, hash):
-        return await self.verify_id.find_one({"user_id": user_id, "hash": hash})
+        return await self._find_one("verify_id", {"user_id": user_id, "hash": hash})
 
     async def update_verify_id_info(self, user_id, hash, value: dict):
-        myquery = {"user_id": user_id, "hash": hash}
-        newvalues = { "$set": value }
-        return await self.verify_id.update_one(myquery, newvalues)
+        existing = await self._find_one("verify_id", {"user_id": user_id, "hash": hash}) or {
+            "user_id": user_id,
+            "hash": hash,
+        }
+        existing.update(value)
+        return await self.verify_id.replace_one(
+            {"user_id": user_id, "hash": hash}, existing, upsert=True
+        )
         
     async def has_premium_access(self, user_id):
         now_ts = datetime.datetime.now().timestamp()
@@ -463,10 +502,24 @@ class Database:
     async def update_maintenance_status(self, bot_id, enable):
         await self.update_bot_setting(bot_id, 'MAINTENANCE', enable)
      
-db = Database(DATABASE_URI, DATABASE_NAME)    
-if MULTIPLE_DB and DATABASE_URI2:
-    db2 = Database(DATABASE_URI2, DATABASE_NAME)
+if DATABASE_URI2:
+    secondary_default_db = motor.motor_asyncio.AsyncIOMotorClient(DATABASE_URI2).get_default_database()
+    secondary_db_name = DATABASE_NAME2 or (
+        secondary_default_db.name if secondary_default_db is not None else DATABASE_NAME
+    )
 else:
-    db2 = db
+    secondary_db_name = DATABASE_NAME
+
+logger.info(
+    "MongoDB user routing: primary=%s, secondary=%s",
+    DATABASE_NAME,
+    secondary_db_name,
+)
+
+if DATABASE_URI2:
+    db2 = Database(DATABASE_URI2, secondary_db_name)
+    db = Database(DATABASE_URI, DATABASE_NAME, secondary=db2)
+else:
+    db2 = db = Database(DATABASE_URI, DATABASE_NAME)
 
 

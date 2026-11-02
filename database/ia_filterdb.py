@@ -10,8 +10,9 @@ from umongo import Instance, Document, fields
 from motor.motor_asyncio import AsyncIOMotorClient
 from utils import get_settings, save_group_settings, LimitedDict
 from info import (
-    COLLECTION_NAME, COVERX, DATABASE_NAME, DATABASE_URI, DATABASE_URI2,
-    INDEX_CAPTION, MAX_B_TN, MULTIPLE_DB, ULTRA_FAST_MODE, USE_CAPTION_FILTER,
+    COLLECTION_NAME, COLLECTION_NAME2, COVERX, DATABASE_NAME, DATABASE_NAME2,
+    DATABASE_URI, DATABASE_URI2, INDEX_CAPTION, MAX_B_TN, MULTIPLE_DB,
+    ULTRA_FAST_MODE, USE_CAPTION_FILTER,
 )
 from datetime import datetime, timedelta
 import asyncio
@@ -33,15 +34,28 @@ client = AsyncIOMotorClient(DATABASE_URI)
 db = client[DATABASE_NAME]
 instance = Instance.from_db(db)
 
-# secondary db
-if MULTIPLE_DB and DATABASE_URI2:
+# Secondary DB: URI database name is respected when DATABASE_NAME2 is unset.
+if DATABASE_URI2:
     client2 = AsyncIOMotorClient(DATABASE_URI2)
-    db2 = client2[DATABASE_NAME]
+    secondary_default_db = client2.get_default_database()
+    secondary_db_name = DATABASE_NAME2 or (
+        secondary_default_db.name if secondary_default_db is not None else DATABASE_NAME
+    )
+    db2 = client2[secondary_db_name]
     instance2 = Instance.from_db(db2)
 else:
     client2 = client
     db2 = db
+    secondary_db_name = DATABASE_NAME
     instance2 = instance
+
+logger.info(
+    "MongoDB movie routing: primary=%s/%s, secondary=%s/%s",
+    DATABASE_NAME,
+    COLLECTION_NAME,
+    secondary_db_name,
+    COLLECTION_NAME2,
+)
 
 
 @instance.register
@@ -76,7 +90,7 @@ class Media2(Document):
 
     class Meta:
         indexes = ("$file_name",)
-        collection_name = COLLECTION_NAME
+        collection_name = COLLECTION_NAME2
 
 
 async def check_db_size(db):
@@ -124,17 +138,7 @@ async def save_file(media):
     except Exception as e:
         logger.error("Error during duplicate check; continuing with save.", exc_info=e)
 
-    if MULTIPLE_DB:
-        try:
-            primary_db_size = await check_db_size(db)
-            if primary_db_size >= 407:
-                saveMedia = Media2
-                target_db = "Secondary"
-                logger.warning("Switching to Secondary DB due to size threshold.")
-        except Exception as e:
-            logger.error(
-                "Error during MULTIPLE_DB check; defaulting to primary DB.", exc_info=e
-            )
+    # New records always stay on the primary database. The secondary is read-only.
     try:
         cover_media = getattr(media, "video_cover", None) or getattr(media, "cover", None)
         cover_to_use = getattr(cover_media, "file_id", None)
@@ -215,8 +219,16 @@ async def get_search_results(chat_id, query, file_type=None, max_results=None, o
                 Media.find(filter_mongo).sort("$natural", -1).limit(fetch_limit).to_list(length=fetch_limit),
                 Media2.find(filter_mongo).sort("$natural", -1).limit(fetch_limit).to_list(length=fetch_limit),
             )
-            files = results[1] + results[0]
-            files = files[offset:offset + limit]
+            merged = []
+            seen = set()
+            for file in results[0] + results[1]:
+                file_id = getattr(file, "file_id", None)
+                if file_id and file_id in seen:
+                    continue
+                if file_id:
+                    seen.add(file_id)
+                merged.append(file)
+            files = merged[offset:offset + limit]
         else:
             files = await Media.find(filter_mongo).sort("$natural", -1).skip(offset).limit(limit).to_list(length=limit)
         has_next_page = len(files) > max_results
@@ -235,8 +247,16 @@ async def get_search_results(chat_id, query, file_type=None, max_results=None, o
                 )
             )
             total_results = sum(count_results)
-            files = find_results[1] + find_results[0]
-            files = files[offset:offset + max_results]
+            merged = []
+            seen = set()
+            for file in find_results[0] + find_results[1]:
+                file_id = getattr(file, "file_id", None)
+                if file_id and file_id in seen:
+                    continue
+                if file_id:
+                    seen.add(file_id)
+                merged.append(file)
+            files = merged[offset:offset + max_results]
         else:
             total_results, files = await asyncio.gather(
                 Media.count_documents(filter_mongo),

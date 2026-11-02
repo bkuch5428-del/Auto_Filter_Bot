@@ -82,12 +82,15 @@ STAR_PREMIUM_PLANS = {
 # MongoDB Configuration
 # ============================
 DATABASE_URI = environ.get('DATABASE_URI', "")  # MongoDB URI for the database
-DATABASE_NAME = environ.get('DATABASE_NAME', "Cluster0") # Database name (default: cluster)
-COLLECTION_NAME = environ.get('COLLECTION_NAME', 'dreamcinezone_files') # Collection name (default: dreamcinezone_files)
+DATABASE_NAME = environ.get('DATABASE_NAME', "Cluster0") # Primary database name
+COLLECTION_NAME = environ.get('COLLECTION_NAME', 'dreamcinezone_files') # Primary movie collection name
 
-# If MULTIPLE_DB Is True Then Fill DATABASE_URI2 Value Else You Will Get Error.
-MULTIPLE_DB = is_enabled(os.environ.get('MULTIPLE_DB', "False"), False) # Type True For Turn On MULTIPLE DB FUNTION 
-DATABASE_URI2 = environ.get('DATABASE_URI2', "")  # MongoDB URI for the second database (if MULTIPLE_DB is True)
+DATABASE_URI2 = environ.get('DATABASE_URI2', "")
+DATABASE_NAME2 = environ.get('DATABASE_NAME2', "")  # Optional secondary database name; URI database name is also supported
+COLLECTION_NAME2 = environ.get('COLLECTION_NAME2', "") or COLLECTION_NAME
+
+# DATABASE_URI2 enables secondary reads even if the deployment has not set MULTIPLE_DB.
+MULTIPLE_DB = bool(DATABASE_URI2) or is_enabled(os.environ.get('MULTIPLE_DB', "False"), False)
 # ============================
 # Movie Notification & Update Settings
 # ============================
@@ -267,10 +270,6 @@ Bot_cmds = {
     "maintenance": "Maintenance Mode (Admin Only)",
 }
 
-
-#Don't Change Anything Here
-if not MULTIPLE_DB:
-    DATABASE_URI2 = DATABASE_URI
 
 # ============================
 # Logs Configuration

@@ -72,8 +72,7 @@ async def dreamxbotz_start():
     temp.BANNED_CHATS = set(b_chats)
     await Media.ensure_indexes()
     if MULTIPLE_DB:
-        await Media2.ensure_indexes()
-        logger.info("Multiple Database Mode On. Now Files Will Be Save In Second DB If First DB Is Full")
+        logger.info("Multiple Database Mode On. Secondary database is enabled for reads only.")
     else:
         logger.info("Single DB Mode On ! Files Will Be Save In First Database")
     
