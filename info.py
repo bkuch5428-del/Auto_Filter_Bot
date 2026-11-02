@@ -81,12 +81,12 @@ STAR_PREMIUM_PLANS = {
 # ============================
 # MongoDB Configuration
 # ============================
-DATABASE_URI = environ.get('DATABASE_URI', "")  # MongoDB URI for the database
-DATABASE_NAME = environ.get('DATABASE_NAME', "Cluster0") # Primary database name
+DATABASE_URI = environ.get('DATABASE_URI', "")  # Primary MongoDB cluster URI
+DATABASE_NAME = environ.get('DATABASE_NAME', "MovieXbot1") # Primary database name
 COLLECTION_NAME = environ.get('COLLECTION_NAME', 'dreamcinezone_files') # Primary movie collection name
 
-DATABASE_URI2 = environ.get('DATABASE_URI2', "")
-DATABASE_NAME2 = environ.get('DATABASE_NAME2', "")  # Optional secondary database name; URI database name is also supported
+DATABASE_URI2 = environ.get('DATABASE_URI2', "")  # Secondary MongoDB cluster URI
+DATABASE_NAME2 = environ.get('DATABASE_NAME2', "")  # Required when secondary URI has no database path
 COLLECTION_NAME2 = environ.get('COLLECTION_NAME2', "") or COLLECTION_NAME
 
 # DATABASE_URI2 enables secondary reads even if the deployment has not set MULTIPLE_DB.

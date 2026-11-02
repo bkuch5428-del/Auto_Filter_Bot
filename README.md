@@ -106,8 +106,10 @@ DreamxBotz is a Telegram auto-filter bot for indexing files from channels/groups
 
 | Variable | Default | Description |
 | --- | --- | --- |
-| `DATABASE_NAME` | `Cluster0` | MongoDB database name |
-| `COLLECTION_NAME` | `dreamcinezone_files` | MongoDB collection name |
+| `DATABASE_NAME` | `MovieXbot1` | Primary MongoDB database name |
+| `DATABASE_NAME2` | (required for secondary) | Existing old secondary MongoDB database name |
+| `COLLECTION_NAME` | `dreamcinezone_files` | Primary MongoDB movie collection name |
+| `COLLECTION_NAME2` | `COLLECTION_NAME` | Secondary MongoDB movie collection name |
 | `BIN_CHANNEL` | `-100` | Channel used for file/bin logs |
 | `PREMIUM_LOGS` | `-100` | Premium activity log channel |
 | `AUTH_CHANNELS` | `-100` | Force subscription channel IDs |

@@ -5,7 +5,7 @@ import base64
 from pyrogram.file_id import FileId
 from typing import Dict, List
 from collections import defaultdict
-from pymongo.errors import DuplicateKeyError
+from pymongo.errors import DuplicateKeyError, ConfigurationError
 from umongo import Instance, Document, fields
 from motor.motor_asyncio import AsyncIOMotorClient
 from utils import get_settings, save_group_settings, LimitedDict
@@ -15,6 +15,7 @@ from info import (
     ULTRA_FAST_MODE, USE_CAPTION_FILTER,
 )
 from datetime import datetime, timedelta
+from urllib.parse import urlparse
 import asyncio
 from functools import lru_cache
 
@@ -34,13 +35,15 @@ client = AsyncIOMotorClient(DATABASE_URI)
 db = client[DATABASE_NAME]
 instance = Instance.from_db(db)
 
-# Secondary DB: URI database name is respected when DATABASE_NAME2 is unset.
+# Secondary DB name comes only from DATABASE_NAME2 or the URI database path.
 if DATABASE_URI2:
+    uri_database_name = urlparse(DATABASE_URI2).path.lstrip("/").split("?", 1)[0]
+    secondary_db_name = DATABASE_NAME2 or uri_database_name
+    if not secondary_db_name:
+        raise ConfigurationError(
+            "Secondary MongoDB database name is missing. Set DATABASE_NAME2 or include the database in DATABASE_URI2."
+        )
     client2 = AsyncIOMotorClient(DATABASE_URI2)
-    secondary_default_db = client2.get_default_database()
-    secondary_db_name = DATABASE_NAME2 or (
-        secondary_default_db.name if secondary_default_db is not None else DATABASE_NAME
-    )
     db2 = client2[secondary_db_name]
     instance2 = Instance.from_db(db2)
 else:

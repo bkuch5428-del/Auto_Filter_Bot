@@ -1,6 +1,8 @@
 import datetime
 import logging
 import motor.motor_asyncio
+from pymongo.errors import ConfigurationError
+from urllib.parse import urlparse
 from info import (
     DATABASE_NAME, DATABASE_NAME2, DATABASE_URI, DATABASE_URI2, MULTIPLE_DB, MAINTENANCE, PM_SEARCH,
     BUTTON_MODE, P_TTI_SHOW_OFF, PROTECT_CONTENT, IMDB, SPELL_CHECK_REPLY, MELCOW_NEW_USERS, 
@@ -42,14 +44,17 @@ class Database:
         self.connection = self.db.connections
 
     async def _find_one(self, collection_name, query, projection=None):
+        collection_aliases = {"users": "uersz"}
+        primary_collection_name = collection_aliases.get(collection_name, collection_name)
         collection = getattr(self, collection_name, None)
-        if collection is None:
-            collection = self.db[collection_name]
+        if collection is None or collection_name == "users":
+            collection = self.db[primary_collection_name]
         document = await collection.find_one(query, projection)
         if document:
             return document
         if self.secondary:
-            return await self.secondary.db[collection_name].find_one(query, projection)
+            secondary_collection_name = collection_aliases.get(collection_name, collection_name)
+            return await self.secondary.db[secondary_collection_name].find_one(query, projection)
         return None
 
     async def _merged_documents(self, collection_name, query=None):
@@ -407,10 +412,17 @@ class Database:
             return False
 
     async def get_expired(self, current_time):
-        expired_users = []
-        if data := self.users.find({"expiry_time": {"$lt": current_time}}):
-            async for user in data:
-                expired_users.append(user)
+        primary = await self.users.find({"expiry_time": {"$lt": current_time}}).to_list(length=None)
+        expired_users = MergedList(primary)
+        seen = {user.get("id") for user in primary}
+        if self.secondary:
+            secondary = await self.secondary.db.uersz.find(
+                {"expiry_time": {"$lt": current_time}}
+            ).to_list(length=None)
+            for user in secondary:
+                if user.get("id") not in seen:
+                    seen.add(user.get("id"))
+                    expired_users.append(user)
         return expired_users
 
     async def remove_premium_access(self, user_id):
@@ -442,15 +454,33 @@ class Database:
             return 1 if result.modified_count > 0 else 0  
         
     async def all_premium_users(self):
-        count = await self.users.count_documents({
-        "expiry_time": {"$gt": datetime.datetime.now()}
-        })
-        return count
+        query = {"expiry_time": {"$gt": datetime.datetime.now()}}
+        primary = await self.users.find(query).to_list(length=None)
+        users = MergedList(primary)
+        seen = {user.get("id") for user in primary}
+        if self.secondary:
+            secondary = await self.secondary.db.uersz.find(query).to_list(length=None)
+            for user in secondary:
+                if user.get("id") not in seen:
+                    seen.add(user.get("id"))
+                    users.append(user)
+        return len(users)
         
     async def get_all_premium_user_data(self):
-        return self.users.find({
-            "expiry_time": {"$gt": datetime.datetime.now()}
-        })
+        query = {"expiry_time": {"$gt": datetime.datetime.now()}}
+        return await self._merged_premium_documents(query)
+
+    async def _merged_premium_documents(self, query):
+        primary = await self.users.find(query).to_list(length=None)
+        users = MergedList(primary)
+        seen = {user.get("id") for user in primary}
+        if self.secondary:
+            secondary = await self.secondary.db.uersz.find(query).to_list(length=None)
+            for user in secondary:
+                if user.get("id") not in seen:
+                    seen.add(user.get("id"))
+                    users.append(user)
+        return users
     
     async def get_bot_setting(self, bot_id, setting_key, default_value):
         bot = await self.botcol.find_one({'id': int(bot_id)}, {setting_key: 1, '_id': 0})
@@ -503,10 +533,12 @@ class Database:
         await self.update_bot_setting(bot_id, 'MAINTENANCE', enable)
      
 if DATABASE_URI2:
-    secondary_default_db = motor.motor_asyncio.AsyncIOMotorClient(DATABASE_URI2).get_default_database()
-    secondary_db_name = DATABASE_NAME2 or (
-        secondary_default_db.name if secondary_default_db is not None else DATABASE_NAME
-    )
+    uri_database_name = urlparse(DATABASE_URI2).path.lstrip("/").split("?", 1)[0]
+    secondary_db_name = DATABASE_NAME2 or uri_database_name
+    if not secondary_db_name:
+        raise ConfigurationError(
+            "Secondary MongoDB database name is missing. Set DATABASE_NAME2 or include the database in DATABASE_URI2."
+        )
 else:
     secondary_db_name = DATABASE_NAME
 

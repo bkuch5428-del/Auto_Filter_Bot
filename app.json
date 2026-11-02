@@ -57,15 +57,20 @@
       "required": true
     },
     "DATABASE_URI2": {
-      "description": "Optional second MongoDB URI. Required only when MULTIPLE_DB is enabled.",
+      "description": "Old secondary MongoDB cluster URI containing existing movies and users.",
       "required": false
     },
     "DATABASE_NAME": {
-      "description": "MongoDB database name.",
+      "description": "Primary MongoDB database name.",
+      "value": "MovieXbot1",
+      "required": true
+    },
+    "DATABASE_NAME2": {
+      "description": "Secondary MongoDB database name containing existing movies and users.",
       "required": false
     },
     "COLLECTION_NAME": {
-      "description": "MongoDB collection name. Use a unique collection name if sharing one database across multiple bots.",
+      "description": "Primary MongoDB movie collection name. Use a unique collection name if sharing one database across multiple bots.",
       "value": "dreamcinezone_files",
       "required": false
     }

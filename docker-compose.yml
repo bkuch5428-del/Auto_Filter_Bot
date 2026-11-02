@@ -12,7 +12,9 @@ services:
       - ADMINS
       - LOG_CHANNEL
       - DATABASE_NAME
+      - DATABASE_NAME2
       - DATABASE_URI
+      - DATABASE_URI2
       - HEROKU_API_KEY
       - PORT
     ports:
